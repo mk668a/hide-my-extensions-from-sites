@@ -1,9 +1,9 @@
 # hide-my-extensions-from-sites 🛡
 
-**[English](README.md) ・ 日本語**
+**[English](../../README.md) ・ 日本語**
 
 <p align="center">
-  <img src="store/assets/promo-marquee-1400x560.png" alt="サイトはあなたの拡張一覧で指紋を取る。一覧ごと隠す。汎用・ローカル・無料 — 拡張列挙に対するプライバシー版 uBlock。" width="820">
+  <img src="../../store/assets/promo-marquee-1400x560.png" alt="サイトはあなたの拡張一覧で指紋を取る。一覧ごと隠す。汎用・ローカル・無料 — 拡張列挙に対するプライバシー版 uBlock。" width="820">
 </p>
 
 **Hide my extensions from every site that scans.**
@@ -32,7 +32,7 @@
 
 | 受動防御 — 一覧を隠す | 欺瞞モード — 列挙を汚す |
 |:---:|:---:|
-| ![現在のタブで拡張 probe をブロックしているポップアップ](store/assets/screenshot-1-hero.png) | ![スキャナに偽の「インストール済み」結果を返すポップアップ](store/assets/screenshot-2-deception.png) |
+| ![現在のタブで拡張 probe をブロックしているポップアップ](../../store/assets/screenshot-1-hero.png) | ![スキャナに偽の「インストール済み」結果を返すポップアップ](../../store/assets/screenshot-2-deception.png) |
 
 ---
 

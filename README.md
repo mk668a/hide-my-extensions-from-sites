@@ -1,6 +1,6 @@
 # hide-my-extensions-from-sites 🛡
 
-**English ・ [日本語](README.ja.md)**
+**English ・ [日本語](docs/i18n/README.ja.md)**
 
 <p align="center">
   <img src="store/assets/promo-marquee-1400x560.png" alt="Sites fingerprint you by your extensions. Hide the whole list. Universal, local, free — the privacy uBlock for extension enumeration." width="820">

@@ -1,0 +1,20 @@
+{
+  "name": "hide-my-extensions-from-sites",
+  "version": "0.1.0",
+  "description": "Hide which browser extensions you have installed from sites that scan for them.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "build": "bash tools/pack.sh",
+    "icons": "python3 tools/make_icons.py"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.playwright/
+__pycache__/
+*.pyc
+.DS_Store
+
+# local-only dev notes (never publish)
+PLAN.md
+CLAUDE.md

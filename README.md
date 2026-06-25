@@ -2,6 +2,10 @@
 
 **English ・ [日本語](README.ja.md)**
 
+<p align="center">
+  <img src="store/assets/promo-marquee-1400x560.png" alt="Sites fingerprint you by your extensions. Hide the whole list. Universal, local, free — the privacy uBlock for extension enumeration." width="820">
+</p>
+
 **Hide my extensions from every site that scans.**
 
 Websites can silently read *which browser extensions you have installed*. They fetch `chrome-extension://{id}/{resource}` URLs one by one and **enumerate** your installed extensions from which ones respond — the trick exposed by LinkedIn's "BrowserGate." It's a strong fingerprinting signal, usable for tracking, targeting, and censorship.
@@ -25,6 +29,10 @@ Websites can silently read *which browser extensions you have installed*. They f
 2. **Hide existence (passive defense)** — return a uniform "not present" response so installed extensions can't be read.
 3. **Poison the enumeration (active deception, optional mode)** — instead of just "not present," return a **fake extension list** to corrupt the scanner's results. If passive defense means "don't leak," this means "make them swallow lies."
 4. **See it work** — when a site is caught scanning, the icon shows a badge (e.g. `🛡 12 scans blocked`) with a real-time log.
+
+| Passive defense — hide the list | Deception mode — poison the scan |
+|:---:|:---:|
+| ![Popup showing extension probes blocked on the current tab](store/assets/screenshot-1-hero.png) | ![Popup feeding the scanner fake "installed" results](store/assets/screenshot-2-deception.png) |
 
 ---
 

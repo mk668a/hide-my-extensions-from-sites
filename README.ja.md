@@ -2,6 +2,10 @@
 
 **[English](README.md) ・ 日本語**
 
+<p align="center">
+  <img src="store/assets/promo-marquee-1400x560.png" alt="サイトはあなたの拡張一覧で指紋を取る。一覧ごと隠す。汎用・ローカル・無料 — 拡張列挙に対するプライバシー版 uBlock。" width="820">
+</p>
+
 **Hide my extensions from every site that scans.**
 
 サイトはあなたに黙って「どのブラウザ拡張を入れているか」を読み取れます。`chrome-extension://{id}/{resource}` を端から fetch して、応答の有無でインストール済み拡張を**列挙**する手口です（LinkedIn の "BrowserGate" で表面化）。これは強力な fingerprint シグナルになり、トラッキング・標的化・検閲に使われます。
@@ -25,6 +29,10 @@
 2. **存在を隠す（受動防御）** — probe には一律で「無い」応答を返し、インストール済み拡張を読み取れなくします。
 3. **列挙を汚す（能動欺瞞、任意モード）** — 「無い」を返すだけでなく、**偽の拡張リスト**を返してスキャナの結果を汚染します。受動防御が「漏らさない」なら、こちらは「嘘を掴ませる」。
 4. **動きが見える** — スキャンを検知したサイトでアイコンにバッジ（例: `🛡 12 scans blocked`）+ リアルタイムログ。
+
+| 受動防御 — 一覧を隠す | 欺瞞モード — 列挙を汚す |
+|:---:|:---:|
+| ![現在のタブで拡張 probe をブロックしているポップアップ](store/assets/screenshot-1-hero.png) | ![スキャナに偽の「インストール済み」結果を返すポップアップ](store/assets/screenshot-2-deception.png) |
 
 ---
 

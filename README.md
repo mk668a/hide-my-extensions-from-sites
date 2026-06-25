@@ -42,21 +42,34 @@ Websites can silently read *which browser extensions you have installed*. They f
 
 - **No accounts, no servers, no cloud.** Everything runs locally in your browser — deterministic, offline, free.
 - **Allow-list for trusted extensions.** Some extensions legitimately serve resources to the page; add their id in the popup and their requests pass through untouched.
-- Target: **Chrome / Chromium**, Manifest V3.
+- Target: **Chrome / Chromium** (111+) and **Firefox** (140+), Manifest V3.
 
 ---
 
 ## 📦 Install (load it locally)
 
-No Chrome Web Store listing yet — run it unpacked:
+No store listing yet — run it unpacked. `npm run build` produces two zips in `dist/`:
+`…-chrome-<version>.zip` and `…-firefox-<version>.zip`. They share identical code;
+only the manifest differs (Firefox uses an event-page background and declares no
+data collection).
 
-1. Get this folder (clone it, or `npm run build` to produce `dist/hide-my-extensions-from-sites-<version>.zip` and unzip it).
-2. Open `chrome://extensions`.
-3. Turn on **Developer mode** (top-right).
-4. Click **Load unpacked** and pick the folder that contains `manifest.json`.
-5. The 🛡 icon shows up in the toolbar. Click it to toggle protection and watch the per-tab scan count.
+**Chrome / Chromium (111+):**
 
-> A `.zip` can't be installed directly by Chrome — unzip it first, then "Load unpacked" the folder. Needs Chrome / Chromium 111+ (for MAIN-world content scripts).
+1. Get the Chrome folder (clone the repo, or unzip `…-chrome-<version>.zip`).
+2. Open `chrome://extensions` → turn on **Developer mode** (top-right).
+3. Click **Load unpacked** and pick the folder that contains `manifest.json`.
+
+**Firefox (140+):**
+
+1. Unzip `…-firefox-<version>.zip`.
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Click **Load Temporary Add-on…** and pick the `manifest.json` inside it.
+
+Either way, the 🛡 icon shows up in the toolbar — click it to toggle protection and
+watch the per-tab scan count.
+
+> A `.zip` can't be installed directly — unzip it first. Firefox needs 140+ and
+> Chrome/Chromium needs 111+ (both for MAIN-world content scripts).
 
 ## 🧪 Develop & test
 
@@ -67,12 +80,13 @@ npm run test:e2e    # system test (Playwright; run `npx playwright install chrom
 npm run build       # produce the loadable zip in dist/
 ```
 
-Tests are layered: unit + integration (`tests/`) run under vitest, and an E2E test loads the real unpacked extension in Chromium.
+Tests are layered: unit + integration (`tests/`) run under vitest, and an E2E test loads the real unpacked extension in Chromium. The Firefox build's manifest is generated from the Chrome one by `tools/firefox-manifest.js` (one source of truth) and validated by `web-ext lint`.
 
 ## 🚧 Status
 
 **Early build** — the extension works end to end (load it unpacked) and is covered
-by unit, integration, and E2E tests. Not yet published to the Chrome Web Store.
+by unit, integration, and E2E tests. Not yet published to the Chrome Web Store or
+Firefox Add-ons.
 
 ## 📄 License
 

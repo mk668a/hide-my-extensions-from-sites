@@ -42,21 +42,32 @@
 
 - **アカウント不要・サーバー不要・クラウド不要。** すべてブラウザ内でローカルに動く決定的処理。オフラインで完結し、無料。
 - **信頼する拡張の allow-list。** ページに正規にリソースを供給する拡張は、popup で ID を登録すればそのまま通します（誤爆回避）。
-- 対象: **Chrome / Chromium**、Manifest V3。
+- 対象: **Chrome / Chromium**（111+）と **Firefox**（140+）、Manifest V3。
 
 ---
 
 ## 📦 インストール（ローカルで読み込む）
 
-Chrome Web Store 未掲載。unpacked で動かします:
+ストア未掲載。unpacked で動かします。`npm run build` は `dist/` に 2 つの zip を生成します:
+`…-chrome-<version>.zip` と `…-firefox-<version>.zip`。コードは同一で、manifest だけが
+異なります（Firefox は event-page background を使い、データ収集なしを宣言）。
 
-1. このフォルダを用意（clone する、または `npm run build` で `dist/hide-my-extensions-from-sites-<version>.zip` を作って解凍）。
-2. `chrome://extensions` を開く。
-3. 右上の **デベロッパーモード** を ON。
-4. **パッケージ化されていない拡張機能を読み込む** で `manifest.json` のあるフォルダを選択。
-5. ツールバーに 🛡 アイコンが出ます。クリックで保護の ON/OFF とタブ別スキャン数を確認。
+**Chrome / Chromium（111+）:**
 
-> `.zip` は Chrome に直接インストールできません。先に解凍して、フォルダを「読み込む」。Chrome / Chromium 111+ が必要（MAIN-world content script のため）。
+1. Chrome 用フォルダを用意（repo を clone、または `…-chrome-<version>.zip` を解凍）。
+2. `chrome://extensions` を開く → 右上の **デベロッパーモード** を ON。
+3. **パッケージ化されていない拡張機能を読み込む** で `manifest.json` のあるフォルダを選択。
+
+**Firefox（140+）:**
+
+1. `…-firefox-<version>.zip` を解凍。
+2. `about:debugging#/runtime/this-firefox` を開く。
+3. **一時的な拡張機能を読み込む** で中の `manifest.json` を選択。
+
+どちらもツールバーに 🛡 アイコンが出ます。クリックで保護の ON/OFF とタブ別スキャン数を確認。
+
+> `.zip` は直接インストールできません。先に解凍してください。Firefox は 140+、
+> Chrome / Chromium は 111+ が必要（どちらも MAIN-world content script のため）。
 
 ## 🧪 開発・テスト
 
@@ -67,12 +78,12 @@ npm run test:e2e    # システムテスト（Playwright。初回のみ npx play
 npm run build       # dist/ に読み込み用 zip を生成
 ```
 
-テストは多層: ユニット + 統合（`tests/`）は vitest で実行、E2E は実物の unpacked 拡張を Chromium にロードして検証。
+テストは多層: ユニット + 統合（`tests/`）は vitest で実行、E2E は実物の unpacked 拡張を Chromium にロードして検証。Firefox 版の manifest は `tools/firefox-manifest.js` が Chrome 版から生成し（単一の真実）、`web-ext lint` で検証します。
 
 ## 🚧 ステータス
 
 **初期ビルド** — 拡張は end-to-end で動作（unpacked で読み込み可能）、ユニット・統合・E2E
-テストでカバー済み。Chrome Web Store へは未公開。
+テストでカバー済み。Chrome Web Store / Firefox Add-ons へは未公開。
 
 ## 📄 ライセンス
 

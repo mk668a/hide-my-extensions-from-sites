@@ -1,6 +1,6 @@
 # hide-my-extensions-from-sites 🛡
 
-**[English](../../README.md) ・ 日本語**
+**[English](../../README.md) ・ 日本語 ・ [简体中文](README.zh-CN.md) ・ [한국어](README.ko.md) ・ [Español](README.es.md) ・ [Français](README.fr.md)**
 
 <p align="center">
   <img src="../../store/assets/promo-marquee-1400x560.png" alt="サイトはあなたの拡張一覧で指紋を取る。一覧ごと隠す。汎用・ローカル・無料 — 拡張列挙に対するプライバシー版 uBlock。" width="820">

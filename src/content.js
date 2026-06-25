@@ -5,15 +5,25 @@
 
   const HIT = '__hmef_hit_b7f3';
   const CFG = '__hmef_cfg_b7f3';
+  const BOOT = '__hmef_boot_b7f3';
   const DEFAULTS = { enabled: true, deception: false, allowlist: [] };
+
+  // A per-load secret the page world (inject.js) requires on every config update.
+  // We run at document_start, before any page script, so posting it now means the
+  // page never observes it and can't forge a CFG message to disable protection.
+  const nonce =
+    (self.crypto && typeof self.crypto.randomUUID === 'function')
+      ? self.crypto.randomUUID()
+      : String(Math.random()).slice(2) + String(Date.now());
 
   function pushConfig() {
     chrome.storage.local.get(DEFAULTS, (cfg) => {
-      window.postMessage({ __tag: CFG, config: cfg }, '*');
+      window.postMessage({ __tag: CFG, nonce, config: cfg }, '/');
     });
   }
 
-  // Send current config to the page world as early as possible, then keep it synced.
+  // Hand the page world the nonce first (synchronously), then push config.
+  window.postMessage({ __tag: BOOT, nonce }, '/');
   pushConfig();
   chrome.storage.onChanged.addListener((_changes, area) => {
     if (area === 'local') pushConfig();

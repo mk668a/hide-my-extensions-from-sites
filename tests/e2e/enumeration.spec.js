@@ -18,15 +18,33 @@ const FAKE_ID = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
 const PROBE_PAGE = `<!doctype html><meta charset="utf-8"><title>probe</title>
 <script>
+  const wait = () => new Promise((r) => setTimeout(r, 0));
   window.__probe = {
     imgSrcAfter(url) {
       const img = document.createElement('img');
       img.src = url;
       return img.getAttribute('src');
     },
+    iframeSrcAfter(url) {
+      const el = document.createElement('iframe');
+      el.src = url;
+      return el.getAttribute('src');
+    },
+    cssBgAfter(url) {
+      const d = document.createElement('div');
+      d.style.setProperty('background-image', 'url(' + url + ')');
+      return d.style.getPropertyValue('background-image');
+    },
     async fetchProbe(url) {
       try { await fetch(url); return 'resolved'; }
       catch (e) { return 'rejected:' + e.name; }
+    },
+    // Attacker: try to disable protection by spoofing a config message with no
+    // nonce, then confirm a probe is STILL neutralized.
+    async spoofDisableThenImg(url) {
+      window.postMessage({ __tag: '__hmef_cfg_b7f3', config: { enabled: false } }, '*');
+      await wait();
+      return this.imgSrcAfter(url);
     }
   };
 </script>
@@ -107,5 +125,32 @@ test('rejects a chrome-extension fetch probe when protection is on', async () =>
     `chrome-extension://${FAKE_ID}/x.js`
   );
   expect(result).toContain('rejected');
+  await page.close();
+});
+
+test('neutralizes iframe.src and CSS background-image probes', async () => {
+  await setEnabled(true);
+  const page = await context.newPage();
+  await page.goto(baseURL);
+
+  const url = `chrome-extension://${FAKE_ID}/probe`;
+  const iframeSrc = await page.evaluate((u) => window.__probe.iframeSrcAfter(u), url);
+  const cssBg = await page.evaluate((u) => window.__probe.cssBgAfter(u), url);
+
+  expect(iframeSrc).not.toContain('chrome-extension');
+  expect(cssBg).not.toContain('chrome-extension');
+  await page.close();
+});
+
+test('a page cannot disable protection by spoofing a config message', async () => {
+  await setEnabled(true);
+  const page = await context.newPage();
+  await page.goto(baseURL);
+
+  const after = await page.evaluate(
+    (u) => window.__probe.spoofDisableThenImg(u),
+    `chrome-extension://${FAKE_ID}/probe.png`
+  );
+  expect(after).not.toContain('chrome-extension'); // spoof ignored, still blocked
   await page.close();
 });

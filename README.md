@@ -46,6 +46,52 @@ Websites can silently read *which browser extensions you have installed*. They f
 
 ---
 
+## 🎯 Threat model & coverage
+
+The attacker is a **web page** trying to learn which extensions you have installed
+by requesting `chrome-extension://{id}/{resource}` (or `moz-extension://…`) URLs
+and watching which ones resolve. We run in the page's MAIN world at
+`document_start`, before any page script, and neutralise every request channel a
+page can use to issue or observe such a probe.
+
+**Blocked probe vectors** (each has a regression test):
+
+| Channel | How it's neutralised |
+|---|---|
+| `fetch()` | extension-URL probes rejected (or faked in deception mode) |
+| `XMLHttpRequest` | `open()` to an extension URL is redirected to a dead URL |
+| `<img>` / `<script>` / `<link>` `src`/`href` | property setter + `setAttribute` rewritten |
+| `<iframe>` / `<object>` / `<embed>` | `src` / `data` setters + `setAttribute` rewritten |
+| `srcset` (`<img>` / `<source>`) | setter + `setAttribute` rewritten |
+| SVG `<use>` `xlink:href` | `setAttributeNS` (namespaced) rewritten |
+| CSS `url(extension://…)` | `setProperty` / `cssText` / `setAttribute("style")` scrubbed |
+| `navigator.sendBeacon` | extension-URL beacons dropped |
+| `EventSource` | extension-URL streams redirected to a dead URL |
+
+**Trust boundary.** The ISOLATED-world bridge hands the MAIN world a per-load
+nonce before any page script runs; every config update must carry it, over a
+same-origin (`'/'`) channel. A hostile page therefore **cannot spoof a message to
+turn protection off**, and cannot sniff the nonce.
+
+**Known gaps (documented, by design):**
+
+- **`el.style.backgroundImage = …`** (direct camelCase property) is a *native named
+  setter* in Chrome — it isn't on `CSSStyleDeclaration.prototype`, so it can't be
+  patched. CSS also gives no load/error signal, making it a poor enumeration oracle;
+  the string-based CSS paths above *are* covered.
+- **Timing oracles** (`onload`/`onerror` latency differences) are not normalised —
+  this needs a design, not a single patch, and is out of scope for 1.0.
+- One Firefox-for-**Android** `web-ext` lint warning (data-collection key floor);
+  this is a desktop-targeted build.
+
+**Config schema (frozen at v1).** Stored config is exactly
+`{ schemaVersion, enabled, deception, allowlist }`. On load it is migrated to this
+shape: `enabled` is fail-safe (anything non-boolean means **protection on**),
+`deception` is strict opt-in, and `allowlist` is validated to lowercase 32-char
+ids. Old or corrupt configs are upgraded in place, idempotently.
+
+---
+
 ## 📦 Install (load it locally)
 
 No store listing yet — run it unpacked. `npm run build` produces two zips in `dist/`:
@@ -84,9 +130,10 @@ Tests are layered: unit + integration (`tests/`) run under vitest, and an E2E te
 
 ## 🚧 Status
 
-**Early build** — the extension works end to end (load it unpacked) and is covered
-by unit, integration, and E2E tests. Not yet published to the Chrome Web Store or
-Firefox Add-ons.
+**v1.0 — stable.** The config schema is frozen (with in-place migration) and the
+blocked vectors are documented above, each with a regression test (unit +
+integration + Chromium E2E). Distributed as a local "Load unpacked / Load
+Temporary Add-on" zip; not yet listed on the Chrome Web Store or Firefox Add-ons.
 
 ## 📄 License
 

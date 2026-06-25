@@ -26,9 +26,11 @@ beforeAll(() => {
   origFetch = vi.fn(() => Promise.resolve('REAL_RESPONSE'));
   window.fetch = origFetch;
 
-  // Order mirrors the manifest: worker first, then the two content scripts.
+  // Order mirrors the manifest: worker first, then the MAIN-world inject, then
+  // the ISOLATED pair (schema.js publishes HMEFSchema before content.js uses it).
   runScript(readSrc('background.js'));
   runScript(readSrc('inject.js'));
+  runScript(readSrc('schema.js'));
   runScript(readSrc('content.js'));
 });
 

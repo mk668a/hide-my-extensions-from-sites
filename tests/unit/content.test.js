@@ -18,6 +18,7 @@ beforeAll(() => {
     if (e?.data?.__tag === CFG) cfgMsgs.push(e.data);
   });
 
+  runScript(readSrc('schema.js')); // publishes self.HMEFSchema, as in the manifest
   runScript(readSrc('content.js'));
 });
 

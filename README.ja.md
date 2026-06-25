@@ -46,6 +46,49 @@
 
 ---
 
+## 🎯 脅威モデルとカバレッジ
+
+攻撃者は **Web ページ**で、`chrome-extension://{id}/{resource}`（や `moz-extension://…`）
+を要求して応答の有無からインストール済み拡張を列挙しようとします。本拡張はページの
+MAIN world・`document_start`（ページスクリプトより前）で動き、probe を発行・観測しうる
+あらゆるリクエスト経路を無力化します。
+
+**ブロックする probe 経路**（各々に回帰テストあり）:
+
+| 経路 | 無力化の方法 |
+|---|---|
+| `fetch()` | 拡張 URL の probe を reject（deception モードでは fake） |
+| `XMLHttpRequest` | 拡張 URL への `open()` を dead URL に差し替え |
+| `<img>` / `<script>` / `<link>` の `src`/`href` | setter + `setAttribute` を書き換え |
+| `<iframe>` / `<object>` / `<embed>` | `src` / `data` setter + `setAttribute` を書き換え |
+| `srcset`（`<img>` / `<source>`） | setter + `setAttribute` を書き換え |
+| SVG `<use>` の `xlink:href` | `setAttributeNS`（名前空間付き）を書き換え |
+| CSS `url(extension://…)` | `setProperty` / `cssText` / `setAttribute("style")` を除去 |
+| `navigator.sendBeacon` | 拡張 URL の beacon を破棄 |
+| `EventSource` | 拡張 URL のストリームを dead URL に差し替え |
+
+**信頼境界。** ISOLATED world のブリッジは、ページスクリプトが走る前に MAIN world へ
+ロード毎の nonce を渡します。以降の config 更新はすべてこの nonce を要求し、same-origin
+(`'/'`) で通信します。よって悪意あるページは**メッセージを偽装して保護を OFF にできず**、
+nonce を盗み見ることもできません。
+
+**既知の gap（設計上の明示）:**
+
+- **`el.style.backgroundImage = …`**（camelCase プロパティ直接代入）は Chrome では
+  *native named setter* で `CSSStyleDeclaration.prototype` 上に無く、patch 不能。CSS は
+  load/error シグナルも出さず列挙 oracle として弱い。上記の文字列ベース CSS 経路は対応済み。
+- **タイミング oracle**（`onload`/`onerror` の遅延差）は未正規化 — 単純な patch では
+  なく設計が要るため 1.0 では対象外。
+- Firefox for **Android** の `web-ext` lint 警告が 1 件（data-collection キーの下限）。
+  本ビルドはデスクトップ対象。
+
+**config スキーマ（v1 で凍結）。** 保存される config は
+`{ schemaVersion, enabled, deception, allowlist }` のみ。読み込み時にこの形へ migration:
+`enabled` は fail-safe（boolean 以外は**保護 ON**）、`deception` は厳格な opt-in、
+`allowlist` は小文字 32 文字 ID に検証。旧式・破損 config は冪等に in-place 更新。
+
+---
+
 ## 📦 インストール（ローカルで読み込む）
 
 ストア未掲載。unpacked で動かします。`npm run build` は `dist/` に 2 つの zip を生成します:
@@ -82,8 +125,10 @@ npm run build       # dist/ に読み込み用 zip を生成
 
 ## 🚧 ステータス
 
-**初期ビルド** — 拡張は end-to-end で動作（unpacked で読み込み可能）、ユニット・統合・E2E
-テストでカバー済み。Chrome Web Store / Firefox Add-ons へは未公開。
+**v1.0 — 安定版。** config スキーマを凍結（in-place migration 付き）、ブロックする
+ベクタは上記に明文化し各々に回帰テスト（ユニット + 統合 + Chromium E2E）。配布は
+ローカルの「Load unpacked / 一時的な拡張機能を読み込む」zip。Chrome Web Store /
+Firefox Add-ons へは未掲載。
 
 ## 📄 ライセンス
 

@@ -154,3 +154,32 @@ test('a page cannot disable protection by spoofing a config message', async () =
   expect(after).not.toContain('chrome-extension'); // spoof ignored, still blocked
   await page.close();
 });
+
+test('migrates an old/corrupt stored config: stays protected and upgrades storage', async () => {
+  const [sw] = context.serviceWorkers();
+  // Seed a pre-1.0 / corrupt config: fail-unsafe `enabled`, junk allowlist, a
+  // stray legacy key, and crucially no schemaVersion.
+  await sw.evaluate(async () => {
+    await chrome.storage.local.clear();
+    await chrome.storage.local.set({ enabled: 'nope', allowlist: 'x', legacyKey: 7 });
+  });
+
+  const page = await context.newPage(); // content.js migrates on this load
+  await page.goto(baseURL);
+
+  // Fail-safe: a non-boolean `enabled` must NOT disable protection.
+  const after = await page.evaluate(
+    (u) => window.__probe.imgSrcAfter(u),
+    `chrome-extension://${FAKE_ID}/probe.png`
+  );
+  expect(after).not.toContain('chrome-extension');
+
+  // The stored config was upgraded in place to the frozen v1 shape.
+  const stored = await sw.evaluate(() => chrome.storage.local.get(null));
+  expect(stored.schemaVersion).toBe(1);
+  expect(Array.isArray(stored.allowlist)).toBe(true);
+  expect(stored.enabled).toBe(true);
+
+  await page.close();
+  await setEnabled(true); // restore a clean state for any later runs
+});

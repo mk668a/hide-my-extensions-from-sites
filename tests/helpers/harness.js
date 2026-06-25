@@ -61,8 +61,15 @@ export function makeChrome(opts = {}) {
     storage: {
       local: {
         get(defaults, cb) {
-          const result = typeof defaults === 'object' && defaults ? { ...defaults } : {};
-          for (const k of Object.keys(result)) if (k in store) result[k] = store[k];
+          // chrome.storage.local.get(null) returns the whole store; get(obj)
+          // returns those keys with defaults filled in for missing ones.
+          let result;
+          if (defaults == null) {
+            result = { ...store };
+          } else {
+            result = typeof defaults === 'object' ? { ...defaults } : {};
+            for (const k of Object.keys(result)) if (k in store) result[k] = store[k];
+          }
           if (cb) cb(result);
           return Promise.resolve(result);
         },

@@ -1,6 +1,6 @@
 {
   "name": "hide-my-extensions-from-sites",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Hide which browser extensions you have installed from sites that scan for them.",
   "private": true,
   "type": "module",

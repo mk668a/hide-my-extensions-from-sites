@@ -6,7 +6,9 @@
   const HIT = '__hmef_hit_b7f3';
   const CFG = '__hmef_cfg_b7f3';
   const BOOT = '__hmef_boot_b7f3';
-  const DEFAULTS = { enabled: true, deception: false, allowlist: [] };
+  // schema.js runs first in this same isolated world and publishes HMEFSchema.
+  const { migrateConfig } = self.HMEFSchema;
+  const isTop = window.top === window;
 
   // A per-load secret the page world (inject.js) requires on every config update.
   // We run at document_start, before any page script, so posting it now means the
@@ -16,9 +18,25 @@
       ? self.crypto.randomUUID()
       : String(Math.random()).slice(2) + String(Date.now());
 
+  // True if stored config isn't already in the canonical v1 shape on its known
+  // keys — i.e. an old/corrupt config that should be upgraded in place.
+  function needsUpgrade(raw, clean) {
+    return (
+      raw.schemaVersion !== clean.schemaVersion ||
+      raw.enabled !== clean.enabled ||
+      raw.deception !== clean.deception ||
+      raw.allowlist === undefined ||
+      String(raw.allowlist) !== String(clean.allowlist)
+    );
+  }
+
   function pushConfig() {
-    chrome.storage.local.get(DEFAULTS, (cfg) => {
+    chrome.storage.local.get(null, (raw) => {
+      const cfg = migrateConfig(raw); // always hand inject a clean, frozen-shape config
       window.postMessage({ __tag: CFG, nonce, config: cfg }, '/');
+      // Persist the migration once, from the top frame only. migrateConfig is
+      // idempotent, so after the write the next read matches and this stops.
+      if (isTop && needsUpgrade(raw, cfg)) chrome.storage.local.set(cfg);
     });
   }
 

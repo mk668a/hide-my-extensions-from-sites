@@ -2,18 +2,18 @@
 // in one global and drives them from a simulated page action, exercising the
 // postMessage → runtime.sendMessage → badge seam end to end.
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
-import { readSrc, runScript, makeChrome, installSyncPostMessage } from '../helpers/harness.js';
+import { readSrc, runScript, makeChrome, installSyncPostMessage } from '../helpers/harness';
 
 const CHROME_URL = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/probe.js';
 const TAB = 5;
 
-let chrome;
-let origFetch;
+let chrome: any;
+let origFetch: any;
 
-function badgesFor(tabId) {
-  return chrome.__calls.setBadgeText.filter((b) => b.tabId === tabId);
+function badgesFor(tabId: number) {
+  return chrome.__calls.setBadgeText.filter((b: any) => b.tabId === tabId);
 }
-function lastBadgeText(tabId) {
+function lastBadgeText(tabId: number) {
   const b = badgesFor(tabId);
   return b.length ? b[b.length - 1].text : undefined;
 }
@@ -59,8 +59,8 @@ describe('end-to-end probe defense', () => {
     const res = await window.fetch(CHROME_URL);
     expect(res.status).toBe(200);
 
-    let stats;
-    chrome.runtime.sendMessage({ type: 'getStats', tabId: TAB }, (s) => (stats = s));
+    let stats: any;
+    chrome.runtime.sendMessage({ type: 'getStats', tabId: TAB }, (s: any) => (stats = s));
     expect(stats.count).toBe(1);
     expect(stats.log[0]).toMatchObject({ action: 'fake' });
 
@@ -74,8 +74,8 @@ describe('end-to-end probe defense', () => {
     await expect(window.fetch(CHROME_URL)).resolves.toBe('REAL_RESPONSE');
     expect(origFetch).toHaveBeenCalledOnce();
 
-    let stats;
-    chrome.runtime.sendMessage({ type: 'getStats', tabId: TAB }, (s) => (stats = s));
+    let stats: any;
+    chrome.runtime.sendMessage({ type: 'getStats', tabId: TAB }, (s: any) => (stats = s));
     expect(stats.count).toBe(0);
 
     chrome.storage.local.set({ enabled: true, deception: false }); // restore

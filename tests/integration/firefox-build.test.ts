@@ -1,5 +1,5 @@
 // Integration / seam test: the Firefox manifest the build actually ships.
-// Drives the real CLI (tools/firefox-manifest.js) against the real, shipped
+// Drives the real CLI (tools/firefox-manifest.ts, via tsx) against the real, shipped
 // manifest.json and writes a file to a temp dir, then asserts the on-disk result
 // would be accepted by Firefox MV3. This is the layer the unit test can't cover:
 // it guards that the *current* Chrome manifest stays transformable and that the
@@ -12,13 +12,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-let dir;
-let ff;
+let dir: string;
+let ff: any;
 
 beforeAll(() => {
   dir = mkdtempSync(path.join(os.tmpdir(), 'hmef-ff-'));
   const out = path.join(dir, 'manifest.json');
-  execFileSync('node', ['tools/firefox-manifest.js', 'manifest.json', out], { cwd: ROOT });
+  // The CLI is TypeScript; run it through tsx exactly as tools/pack.sh does.
+  const tsx = path.join(ROOT, 'node_modules', '.bin', 'tsx');
+  execFileSync(tsx, ['tools/firefox-manifest.ts', 'manifest.json', out], { cwd: ROOT });
   ff = JSON.parse(readFileSync(out, 'utf8'));
 });
 
@@ -43,7 +45,7 @@ describe('shipped Firefox manifest', () => {
   });
 
   it('still ships the MAIN-world inject script that does the actual blocking', () => {
-    const main = ff.content_scripts.find((c) => c.world === 'MAIN');
+    const main = ff.content_scripts.find((c: any) => c.world === 'MAIN');
     expect(main).toBeTruthy();
     expect(main.js).toContain('src/inject.js');
     expect(main.run_at).toBe('document_start');

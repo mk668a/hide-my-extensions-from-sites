@@ -1,0 +1,19 @@
+{
+  // Emit config for the shipped extension. Compiles src/*.ts in place to
+  // src/*.js (classic scripts) that the browser loads directly via manifest.json.
+  // Generated src/*.js is gitignored; `npm run build:src` produces it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    // No outDir: emit each src/*.js next to its src/*.ts (in-place). Setting
+    // outDir to src would make tsc auto-exclude its own output dir and find no
+    // inputs. The generated *.js is gitignored.
+    "declaration": false,
+    "sourceMap": false,
+    // No module wrappers in the output: these are classic content scripts, not
+    // ES modules. None of them use import/export, so emit is a plain script.
+    "module": "ES2020",
+    "types": ["chrome"]
+  },
+  "include": ["src/**/*.ts"]
+}

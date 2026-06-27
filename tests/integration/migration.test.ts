@@ -4,12 +4,12 @@
 // clean frozen-shape config, (2) persists the upgrade, and (3) converges — it
 // writes exactly once and does not loop against its own storage.onChanged.
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readSrc, runScript, makeChrome, installSyncPostMessage } from '../helpers/harness.js';
+import { readSrc, runScript, makeChrome, installSyncPostMessage } from '../helpers/harness';
 
 const CFG = '__hmef_cfg_b7f3';
 
-let chrome;
-let lastCfg;
+let chrome: any;
+let lastCfg: any;
 
 beforeAll(() => {
   installSyncPostMessage();

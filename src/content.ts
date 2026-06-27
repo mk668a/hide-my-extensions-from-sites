@@ -1,4 +1,4 @@
-// content.js — runs in the ISOLATED world. Bridges the MAIN-world inject.js
+// content.ts — runs in the ISOLATED world. Bridges the MAIN-world inject.js
 // (which has no chrome.* access) to the service worker and to storage.
 (() => {
   'use strict';
@@ -14,13 +14,13 @@
   // We run at document_start, before any page script, so posting it now means the
   // page never observes it and can't forge a CFG message to disable protection.
   const nonce =
-    (self.crypto && typeof self.crypto.randomUUID === 'function')
+    self.crypto && typeof self.crypto.randomUUID === 'function'
       ? self.crypto.randomUUID()
       : String(Math.random()).slice(2) + String(Date.now());
 
   // True if stored config isn't already in the canonical v1 shape on its known
   // keys — i.e. an old/corrupt config that should be upgraded in place.
-  function needsUpgrade(raw, clean) {
+  function needsUpgrade(raw: Record<string, unknown>, clean: HmefConfig): boolean {
     return (
       raw.schemaVersion !== clean.schemaVersion ||
       raw.enabled !== clean.enabled ||
@@ -30,8 +30,8 @@
     );
   }
 
-  function pushConfig() {
-    chrome.storage.local.get(null, (raw) => {
+  function pushConfig(): void {
+    chrome.storage.local.get(null, (raw: Record<string, unknown>) => {
       const cfg = migrateConfig(raw); // always hand inject a clean, frozen-shape config
       window.postMessage({ __tag: CFG, nonce, config: cfg }, '/');
       // Persist the migration once, from the top frame only. migrateConfig is
@@ -53,7 +53,7 @@
   }
 
   // Relay intercepted probes from the page world to the worker.
-  window.addEventListener('message', (e) => {
+  window.addEventListener('message', (e: MessageEvent) => {
     if (e.source !== window || !e.data || e.data.__tag !== HIT) return;
     try {
       chrome.runtime.sendMessage({

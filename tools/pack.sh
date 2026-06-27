@@ -18,18 +18,24 @@ fi
 
 mkdir -p dist
 
-# Chrome: manifest.json is already the Chrome manifest.
+# The shipped src/ is TypeScript-authored; src/*.js is compiled output. Build it
+# so the zips contain browser-ready JS (npm run build runs this first, but pack
+# directly should still produce a valid package).
+npx tsc -p tsconfig.src.json
+
+# Chrome: manifest.json is already the Chrome manifest. Authored *.ts (and the
+# *.d.ts ambient types) are excluded — only the compiled *.js ships.
 CHROME_ZIP="dist/${BASE}-chrome-${VERSION}.zip"
 rm -f "$CHROME_ZIP"
-zip -r -q "$CHROME_ZIP" manifest.json src icons -x '*.DS_Store'
+zip -r -q "$CHROME_ZIP" manifest.json src icons -x '*.DS_Store' -x '*.ts'
 echo "built $CHROME_ZIP"
 
 # Firefox: stage a build dir with the generated Firefox manifest at the root.
 FF_ZIP="dist/${BASE}-firefox-${VERSION}.zip"
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
-node tools/firefox-manifest.js manifest.json "$STAGE/manifest.json"
+npx tsx tools/firefox-manifest.ts manifest.json "$STAGE/manifest.json"
 cp -R src icons "$STAGE/"
 rm -f "$FF_ZIP"
-( cd "$STAGE" && zip -r -q "$OLDPWD/$FF_ZIP" manifest.json src icons -x '*.DS_Store' )
+( cd "$STAGE" && zip -r -q "$OLDPWD/$FF_ZIP" manifest.json src icons -x '*.DS_Store' -x '*.ts' )
 echo "built $FF_ZIP"

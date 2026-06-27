@@ -63,12 +63,12 @@ const POPUP_CSS = `
   .popup .url{color:${C.muted};font-family:ui-monospace,Menlo,monospace;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 `;
 
-const logRow = (action, url) =>
+const logRow = (action: string, url: string) =>
   `<li><span class="tag ${action}">${action}</span><span class="url">${url}</span></li>`;
 
-function popup({ count, deception, log, allow }) {
+function popup({ count, deception, log, allow }: any) {
   const allowBody = allow && allow.length
-    ? allow.map((id) => `<li class="chip"><span class="id">${id}</span><span class="x">×</span></li>`).join('')
+    ? allow.map((id: string) => `<li class="chip"><span class="id">${id}</span><span class="x">×</span></li>`).join('')
     : `<li class="none">None — every extension probe is blocked.</li>`;
   return `<div class="popup">
     <header><span class="shield">🛡</span><span class="title">hide-my-extensions</span>
@@ -83,13 +83,13 @@ function popup({ count, deception, log, allow }) {
       <div class="add"><input value="" placeholder="extension id (32 letters)"><button>Add</button></div>
       <ul>${allowBody}</ul></div>
     <div class="log-head">This tab<span class="clear">clear</span></div>
-    <ul class="log">${log.map(([a, u]) => logRow(a, u)).join('')}</ul>
+    <ul class="log">${log.map(([a, u]: [string, string]) => logRow(a, u)).join('')}</ul>
   </div>`;
 }
 
 // ---- shared page frame ----------------------------------------------------
 const FONT = `-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif`;
-function page(bodyCss, body) {
+function page(bodyCss: string, body: string) {
   return `<!doctype html><html><head><meta charset="utf8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
     html,body{font-family:${FONT};-webkit-font-smoothing:antialiased}
@@ -101,10 +101,10 @@ function page(bodyCss, body) {
 const BG = `radial-gradient(1200px 700px at 78% -10%, #15233f 0%, ${C.bg1} 45%, ${C.bg0} 100%)`;
 
 // screenshot scaffold: 1280x800 split — copy left, popup right
-function shot({ kicker, title, sub, bullets, popupState, extra }) {
-  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function shot({ kicker, title, sub, bullets, popupState, extra }: any) {
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const bulletHtml = (bullets || [])
-    .map((b) => `<li><span class="dot"></span>${esc(b)}</li>`)
+    .map((b: string) => `<li><span class="dot"></span>${esc(b)}</li>`)
     .join('');
   return page(`
     .frame{width:1280px;height:800px;background:${BG};display:flex;align-items:center;padding:0 92px;gap:64px;position:relative;overflow:hidden}
@@ -197,7 +197,7 @@ const SCREENS = [
 ];
 
 // ---- promo tiles ----------------------------------------------------------
-function promo(w, h, opts) {
+function promo(w: number, h: number, opts: any) {
   const big = w >= 1000;
   return page(`
     .tile{width:${w}px;height:${h}px;background:${BG};display:flex;align-items:center;gap:${big ? 56 : 26}px;padding:0 ${big ? 90 : 40}px;position:relative;overflow:hidden}
@@ -220,7 +220,7 @@ function promo(w, h, opts) {
 }
 
 // ---- icons ----------------------------------------------------------------
-function iconPage(size) {
+function iconPage(size: number) {
   return `<!doctype html><html><head><meta charset="utf8"><style>
     html,body{margin:0;padding:0}svg{display:block;width:${size}px;height:${size}px}
   </style></head><body>${SHIELD}</body></html>`;
@@ -229,7 +229,13 @@ function iconPage(size) {
 // ---- run ------------------------------------------------------------------
 const browser = await chromium.launch();
 
-async function snap(html, w, h, file, { transparent = false } = {}) {
+async function snap(
+  html: string,
+  w: number,
+  h: number,
+  file: string,
+  { transparent = false }: { transparent?: boolean } = {}
+) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
   await p.setContent(html, { waitUntil: 'networkidle' });

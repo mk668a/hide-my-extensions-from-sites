@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# compiled extension output — emitted from src/*.ts by `npm run build:src`
+src/*.js
+*.tsbuildinfo
 test-results/
 playwright-report/
 .playwright/

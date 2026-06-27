@@ -1,14 +1,24 @@
-// background.js — service worker. Tracks per-tab interception counts, keeps a
+// background.ts — service worker. Tracks per-tab interception counts, keeps a
 // short recent log for the popup, and paints the toolbar badge.
 //
 // State is in-memory: if the worker is evicted the counts reset, which is fine —
 // the next intercepted probe repaints the badge.
 'use strict';
 
-const LOG_CAP = 50;
-const state = new Map(); // tabId -> { count: number, log: Array }
+interface LogEntry {
+  url: string;
+  vector: string;
+  action: string;
+}
+interface TabState {
+  count: number;
+  log: LogEntry[];
+}
 
-function entryFor(tabId) {
+const LOG_CAP = 50;
+const state = new Map<number, TabState>(); // tabId -> { count, log }
+
+function entryFor(tabId: number): TabState {
   let e = state.get(tabId);
   if (!e) {
     e = { count: 0, log: [] };
@@ -17,13 +27,13 @@ function entryFor(tabId) {
   return e;
 }
 
-function paintBadge(tabId, count) {
+function paintBadge(tabId: number, count: number): void {
   const text = count > 0 ? (count > 999 ? '999+' : String(count)) : '';
   chrome.action.setBadgeText({ tabId, text });
   chrome.action.setBadgeBackgroundColor({ tabId, color: '#ef4444' });
 }
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg: any, sender, sendResponse) => {
   const tabId = sender.tab && sender.tab.id;
 
   if (msg && msg.type === 'getStats') {

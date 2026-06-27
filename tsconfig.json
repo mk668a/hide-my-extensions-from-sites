@@ -1,0 +1,21 @@
+{
+  // Base config: type-checks the whole repo (`npm run typecheck`) and emits
+  // nothing. The browser-shipped emit lives in tsconfig.src.json, which extends
+  // this. Extension source files use no import/export (classic scripts wired by
+  // manifest load-order via the self.HMEFSchema global), so they compile 1:1 to
+  // browser-ready JS with no bundler.
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["chrome", "node"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src", "tools", "store/tools", "tests"]
+}

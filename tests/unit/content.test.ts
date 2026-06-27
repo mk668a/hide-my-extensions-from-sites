@@ -1,12 +1,12 @@
 // Unit tests for src/content.js — the ISOLATED-world bridge.
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readSrc, runScript, makeChrome, installSyncPostMessage, postToWorld } from '../helpers/harness.js';
+import { readSrc, runScript, makeChrome, installSyncPostMessage, postToWorld } from '../helpers/harness';
 
 const HIT = '__hmef_hit_b7f3';
 const CFG = '__hmef_cfg_b7f3';
 
-let chrome;
-let cfgMsgs;
+let chrome: any;
+let cfgMsgs: any[];
 
 beforeAll(() => {
   installSyncPostMessage();

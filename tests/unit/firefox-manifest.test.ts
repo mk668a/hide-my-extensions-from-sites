@@ -6,7 +6,7 @@
 // across browsers (the SCHEME regex already matches `moz-extension`), so the
 // transform is the entire browser-specific surface — we pin it precisely.
 import { describe, it, expect } from 'vitest';
-import { toFirefoxManifest } from '../../tools/firefox-manifest.js';
+import { toFirefoxManifest } from '../../tools/firefox-manifest';
 
 const CHROME = {
   manifest_version: 3,
@@ -50,7 +50,7 @@ describe('toFirefoxManifest', () => {
     expect(ff.permissions).toEqual(CHROME.permissions);
     expect(ff.content_scripts).toEqual(CHROME.content_scripts);
     // The MAIN-world inject script — the whole defense — must survive the transform.
-    expect(ff.content_scripts.find((c) => c.world === 'MAIN').js).toEqual(['src/inject.js']);
+    expect(ff.content_scripts.find((c: any) => c.world === 'MAIN').js).toEqual(['src/inject.js']);
   });
 
   it('does not mutate its input', () => {

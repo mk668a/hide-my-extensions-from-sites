@@ -20,8 +20,10 @@
 export const GECKO_ID = 'hide-my-extensions-from-sites@humanhacker.ai';
 export const MIN_FIREFOX = '140.0';
 
-export function toFirefoxManifest(chrome) {
-  const ff = JSON.parse(JSON.stringify(chrome)); // deep clone; never mutate input
+type Manifest = Record<string, any>;
+
+export function toFirefoxManifest(chrome: Manifest): Manifest {
+  const ff: Manifest = JSON.parse(JSON.stringify(chrome)); // deep clone; never mutate input
 
   const worker = chrome.background && chrome.background.service_worker;
   ff.background = { scripts: worker ? [worker] : [] };
@@ -37,13 +39,13 @@ export function toFirefoxManifest(chrome) {
   return ff;
 }
 
-// CLI: `node tools/firefox-manifest.js <chrome-manifest> <out-file>`
+// CLI: `tsx tools/firefox-manifest.ts <chrome-manifest> <out-file>`
 // Writes the Firefox manifest to <out-file>. Used by tools/pack.sh.
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { readFileSync, writeFileSync } = await import('node:fs');
   const [, , src = 'manifest.json', out] = process.argv;
   if (!out) {
-    console.error('usage: node tools/firefox-manifest.js <chrome-manifest> <out-file>');
+    console.error('usage: tsx tools/firefox-manifest.ts <chrome-manifest> <out-file>');
     process.exit(2);
   }
   const chrome = JSON.parse(readFileSync(src, 'utf8'));

@@ -1,6 +1,6 @@
 // Unit tests for src/inject.js — the MAIN-world interception layer.
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
-import { readSrc, runScript, installSyncPostMessage, postToWorld } from '../helpers/harness.js';
+import { readSrc, runScript, installSyncPostMessage, postToWorld } from '../helpers/harness';
 
 const HIT = '__hmef_hit_b7f3';
 const CFG = '__hmef_cfg_b7f3';
@@ -9,12 +9,12 @@ const TEST_NONCE = 'test-nonce-7f3b';
 const CHROME_URL = 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/probe.js';
 const MOZ_URL = 'moz-extension://1111-2222/probe.png';
 
-let hits;
-let origFetch;
-let origBeacon;
-let esUrls; // urls the underlying EventSource constructor actually saw
+let hits: any[];
+let origFetch: any;
+let origBeacon: any;
+let esUrls: string[]; // urls the underlying EventSource constructor actually saw
 
-function setConfig(config) {
+function setConfig(config: any) {
   postToWorld({ __tag: CFG, nonce: TEST_NONCE, config });
 }
 
@@ -34,15 +34,16 @@ beforeAll(() => {
 
   esUrls = [];
   class FakeEventSource {
-    constructor(url) {
+    url: string;
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSED = 2;
+    constructor(url: string) {
       this.url = String(url);
       esUrls.push(this.url);
     }
   }
-  FakeEventSource.CONNECTING = 0;
-  FakeEventSource.OPEN = 1;
-  FakeEventSource.CLOSED = 2;
-  window.EventSource = FakeEventSource;
+  window.EventSource = FakeEventSource as any;
 
   runScript(readSrc('inject.js'));
 
@@ -88,7 +89,7 @@ describe('fetch', () => {
   });
 
   it('reads the URL from a Request-like object', async () => {
-    await expect(window.fetch({ url: CHROME_URL })).rejects.toBeInstanceOf(TypeError);
+    await expect(window.fetch({ url: CHROME_URL } as any)).rejects.toBeInstanceOf(TypeError);
     expect(hits).toHaveLength(1);
   });
 

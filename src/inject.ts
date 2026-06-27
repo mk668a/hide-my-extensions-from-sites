@@ -1,4 +1,4 @@
-// inject.js — runs in the page's MAIN world at document_start.
+// inject.ts — runs in the page's MAIN world at document_start.
 // It patches the JS APIs a page uses to probe `chrome-extension://<id>/<resource>`
 // URLs (the BrowserGate enumeration technique) and makes every probe either fail
 // uniformly (passive) or return a fake "installed" result (deception, optional).
@@ -18,16 +18,17 @@
   // An empty data URL — decodes to nothing, so an <img> fires `onerror` ("absent").
   const DEAD = 'data:,';
 
-  let config = { enabled: true, deception: false, allowlist: [] };
+  type Config = { enabled: boolean; deception: boolean; allowlist: string[] };
+  let config: Config = { enabled: true, deception: false, allowlist: [] };
 
   // Per-load shared secret. content.js (ISOLATED world) posts it once, before
   // any page script can run, so the page never learns it. Every config update is
   // then required to carry it — a page can't spoof a CFG message to disable
   // protection without the nonce, and can't sniff one (the tags are namespaced
   // and the channel is same-origin only).
-  let nonce = null;
+  let nonce: string | null = null;
 
-  window.addEventListener('message', (e) => {
+  window.addEventListener('message', (e: MessageEvent) => {
     // e.source === window means it came from THIS window (not another frame);
     // combined with the '/' (same-origin) targetOrigin our sender uses, that is
     // the trust boundary. The nonce authenticates the privileged content script.
@@ -42,7 +43,7 @@
     }
   });
 
-  function urlOf(input) {
+  function urlOf(input: any): string {
     try {
       if (typeof input === 'string') return input;
       if (input && typeof input === 'object' && typeof input.url === 'string') {
@@ -55,21 +56,21 @@
   }
 
   // The extension id is the host of a chrome-extension://<id>/… URL.
-  function extIdOf(input) {
+  function extIdOf(input: any): string {
     const m = /^[a-z-]+:\/\/([^/]+)/i.exec(urlOf(input));
     return m ? m[1] : '';
   }
 
-  function isAllowed(input) {
+  function isAllowed(input: any): boolean {
     const id = extIdOf(input);
-    return id && Array.isArray(config.allowlist) && config.allowlist.includes(id);
+    return !!id && Array.isArray(config.allowlist) && config.allowlist.includes(id);
   }
 
   // A probe is an extension URL we should defend against — unless its id is on
   // the user's allow-list (an extension they trust to serve page resources).
-  const isProbe = (input) => SCHEME.test(urlOf(input)) && !isAllowed(input);
+  const isProbe = (input: any): boolean => SCHEME.test(urlOf(input)) && !isAllowed(input);
 
-  function report(url, vector, action) {
+  function report(url: string, vector: string, action: string): void {
     if (nonce === null) return; // not bootstrapped yet — nowhere trusted to report
     try {
       window.postMessage(
@@ -80,12 +81,12 @@
   }
 
   // Decide, per probe, whether deception mode fabricates a hit.
-  const fakeThisOne = () => config.deception && Math.random() < 0.5;
+  const fakeThisOne = (): boolean => config.deception && Math.random() < 0.5;
 
   // The single decision point every interceptor funnels through. Returns null
   // when `input` is not something we should act on; otherwise reports the hit
   // and returns { fake } so the caller applies the matching neutralization.
-  function intercept(input, vector) {
+  function intercept(input: any, vector: string): { fake: boolean } | null {
     if (!config.enabled || !isProbe(input)) return null;
     const fake = fakeThisOne();
     report(urlOf(input), vector, fake ? 'fake' : 'block');
@@ -95,15 +96,15 @@
   // --- fetch ---------------------------------------------------------------
   const origFetch = window.fetch;
   if (typeof origFetch === 'function') {
-    window.fetch = function (input, init) {
+    window.fetch = function (this: any, input: any, init?: any) {
       const hit = intercept(input, 'fetch');
       if (hit) {
         return hit.fake
           ? Promise.resolve(new Response('', { status: 200, statusText: 'OK' }))
           : Promise.reject(new TypeError('Failed to fetch'));
       }
-      return origFetch.apply(this, arguments);
-    };
+      return origFetch.apply(this, arguments as any);
+    } as typeof window.fetch;
   }
 
   // --- XMLHttpRequest ------------------------------------------------------
@@ -111,13 +112,13 @@
   if (XHR && XHR.prototype) {
     const origOpen = XHR.prototype.open;
     const origSend = XHR.prototype.send;
-    XHR.prototype.open = function (method, url) {
+    XHR.prototype.open = function (this: any, method: string, url: string) {
       this.__hmefProbe = config.enabled && isProbe(url);
       this.__hmefUrl = url;
-      return origOpen.apply(this, arguments);
-    };
-    XHR.prototype.send = function () {
-      if (!this.__hmefProbe) return origSend.apply(this, arguments);
+      return origOpen.apply(this, arguments as any);
+    } as typeof XHR.prototype.open;
+    XHR.prototype.send = function (this: any) {
+      if (!this.__hmefProbe) return origSend.apply(this, arguments as any);
       const fake = fakeThisOne();
       report(this.__hmefUrl, 'xhr', fake ? 'fake' : 'block');
       const xhr = this;
@@ -133,22 +134,23 @@
         try { xhr.dispatchEvent(new Event(fake ? 'load' : 'error')); } catch (_) {}
         try { xhr.dispatchEvent(new Event('loadend')); } catch (_) {}
       }, 0);
-    };
+    } as typeof XHR.prototype.send;
   }
 
   // --- element src/href property setters -----------------------------------
-  function guardProp(proto, prop, vector) {
+  function guardProp(proto: any, prop: string, vector: string): void {
     if (!proto) return;
     const desc = Object.getOwnPropertyDescriptor(proto, prop);
     if (!desc || typeof desc.set !== 'function') return;
+    const set = desc.set;
     Object.defineProperty(proto, prop, {
       configurable: true,
       enumerable: desc.enumerable,
       get: desc.get,
-      set(value) {
+      set(this: any, value: any) {
         const hit = intercept(value, vector);
-        if (hit) return desc.set.call(this, hit.fake ? FAKE_IMG : DEAD);
-        return desc.set.call(this, value);
+        if (hit) return set.call(this, hit.fake ? FAKE_IMG : DEAD);
+        return set.call(this, value);
       },
     });
   }
@@ -166,11 +168,11 @@
   // Attribute names that carry a URL we should police. `data` covers <object>,
   // `srcset` covers <img>/<source>, `href` covers <a>/<link> and SVG <use>.
   const URL_ATTRS = new Set(['src', 'href', 'data', 'srcset']);
-  const localName = (name) =>
-    typeof name === 'string' ? name.split(':').pop().toLowerCase() : name;
+  const localName = (name: any): string =>
+    typeof name === 'string' ? name.split(':').pop()!.toLowerCase() : name;
 
   const origSetAttr = Element.prototype.setAttribute;
-  Element.prototype.setAttribute = function (name, value) {
+  Element.prototype.setAttribute = function (this: any, name: string, value: string) {
     const n = localName(name);
     if (URL_ATTRS.has(n)) {
       const hit = intercept(value, 'attr:' + n);
@@ -180,20 +182,20 @@
       const scrubbed = scrubCss(value); // inline style can hide url(chrome-extension://…)
       if (scrubbed != null) return origSetAttr.call(this, name, scrubbed);
     }
-    return origSetAttr.apply(this, arguments);
-  };
+    return origSetAttr.apply(this, arguments as any);
+  } as typeof Element.prototype.setAttribute;
 
   // setAttributeNS reaches xlink:href on SVG <use> — a namespaced bypass of the
   // plain setAttribute path above.
   const origSetAttrNS = Element.prototype.setAttributeNS;
-  Element.prototype.setAttributeNS = function (ns, name, value) {
+  Element.prototype.setAttributeNS = function (this: any, ns: string | null, name: string, value: string) {
     const n = localName(name);
     if (URL_ATTRS.has(n)) {
       const hit = intercept(value, 'attr:' + n);
       if (hit) return origSetAttrNS.call(this, ns, name, hit.fake ? FAKE_IMG : DEAD);
     }
-    return origSetAttrNS.apply(this, arguments);
-  };
+    return origSetAttrNS.apply(this, arguments as any);
+  } as typeof Element.prototype.setAttributeNS;
 
   // --- CSS url() (background-image, mask, cursor, …) ------------------------
   // A page can hide a probe inside `url(chrome-extension://…)` in a CSS value.
@@ -208,7 +210,7 @@
   // overwhelmingly use fetch/img/script/link instead.
   const CSS_URL =
     /url\(\s*(['"]?)((?:chrome-extension|moz-extension|safari-web-extension):\/\/[^'")\s]+)\1\s*\)/gi;
-  function scrubCss(value) {
+  function scrubCss(value: any): string | null {
     if (!config.enabled || typeof value !== 'string' || value.indexOf('-extension://') < 0) {
       return null;
     }
@@ -222,16 +224,17 @@
     return touched ? out : null;
   }
 
-  function guardCssProp(proto, prop) {
+  function guardCssProp(proto: any, prop: string): void {
     const desc = Object.getOwnPropertyDescriptor(proto, prop);
     if (!desc || typeof desc.set !== 'function') return;
+    const set = desc.set;
     Object.defineProperty(proto, prop, {
       configurable: true,
       enumerable: desc.enumerable,
       get: desc.get,
-      set(value) {
+      set(this: any, value: any) {
         const scrubbed = scrubCss(value);
-        return desc.set.call(this, scrubbed == null ? value : scrubbed);
+        return set.call(this, scrubbed == null ? value : scrubbed);
       },
     });
   }
@@ -240,10 +243,10 @@
   if (CSSProto) {
     const origSetProperty = CSSProto.setProperty;
     if (typeof origSetProperty === 'function') {
-      CSSProto.setProperty = function (name, value, priority) {
+      CSSProto.setProperty = function (this: any, name: string, value: string, priority?: string) {
         const scrubbed = scrubCss(value);
         return origSetProperty.call(this, name, scrubbed == null ? value : scrubbed, priority);
-      };
+      } as typeof CSSProto.setProperty;
     }
     guardCssProp(CSSProto, 'cssText'); // configurable in Chrome and jsdom
   }
@@ -253,11 +256,11 @@
   // failure); deception returns true to claim the beacon was accepted.
   const origBeacon = navigator.sendBeacon && navigator.sendBeacon.bind(navigator);
   if (typeof origBeacon === 'function') {
-    navigator.sendBeacon = function (url, data) {
+    navigator.sendBeacon = function (url: any, data?: any) {
       const hit = intercept(url, 'beacon');
       if (hit) return !!hit.fake;
       return origBeacon(url, data);
-    };
+    } as typeof navigator.sendBeacon;
   }
 
   // --- EventSource ---------------------------------------------------------
@@ -266,13 +269,13 @@
   // channel and needs no guard.)
   const OrigES = window.EventSource;
   if (typeof OrigES === 'function') {
-    const PatchedES = function (url, init) {
+    const PatchedES = function (this: any, url: any, init?: any) {
       const hit = intercept(url, 'eventsource');
       return new OrigES(hit ? DEAD : url, init);
-    };
+    } as any;
     PatchedES.prototype = OrigES.prototype;
     for (const k of ['CONNECTING', 'OPEN', 'CLOSED']) {
-      try { PatchedES[k] = OrigES[k]; } catch (_) {}
+      try { PatchedES[k] = (OrigES as any)[k]; } catch (_) {}
     }
     window.EventSource = PatchedES;
   }

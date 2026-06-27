@@ -2,13 +2,13 @@
 // the real shipped file (a classic content-script that publishes self.HMEFSchema),
 // loaded through the harness exactly as the browser loads it before content.js.
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readSrc, runScript } from '../helpers/harness.js';
+import { readSrc, runScript } from '../helpers/harness';
 
 const ID_A = 'a'.repeat(32); // valid Chrome extension id: 32 chars of a–p
 const ID_B = 'p'.repeat(32);
 
-let migrateConfig;
-let VERSION;
+let migrateConfig: any;
+let VERSION: any;
 
 beforeAll(() => {
   runScript(readSrc('schema.js'));

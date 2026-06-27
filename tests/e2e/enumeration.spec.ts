@@ -6,6 +6,8 @@
 // Requires a Chromium that can load extensions: run headed locally, or under
 // `xvfb-run` in CI. `npm run test:e2e` after `npx playwright install chromium`.
 import { test, expect, chromium } from '@playwright/test';
+import type { BrowserContext } from '@playwright/test';
+import type { AddressInfo } from 'node:net';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -50,18 +52,18 @@ const PROBE_PAGE = `<!doctype html><meta charset="utf-8"><title>probe</title>
 </script>
 <body>probe fixture</body>`;
 
-let server;
-let baseURL;
-let context;
-let userDataDir;
+let server: http.Server;
+let baseURL: string;
+let context: BrowserContext;
+let userDataDir: string;
 
 test.beforeAll(async () => {
   server = http.createServer((_req, res) => {
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(PROBE_PAGE);
   });
-  await new Promise((r) => server.listen(0, '127.0.0.1', r));
-  baseURL = `http://127.0.0.1:${server.address().port}/`;
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  baseURL = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
 
   userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hmef-e2e-'));
   context = await chromium.launchPersistentContext(userDataDir, {
@@ -79,13 +81,13 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   await context?.close();
-  await new Promise((r) => server?.close(r));
+  await new Promise<void>((r) => server?.close(() => r()));
   if (userDataDir) fs.rmSync(userDataDir, { recursive: true, force: true });
 });
 
-async function setEnabled(enabled) {
+async function setEnabled(enabled: boolean) {
   const [sw] = context.serviceWorkers();
-  await sw.evaluate(async (v) => {
+  await sw.evaluate(async (v: boolean) => {
     await chrome.storage.local.set({ enabled: v, deception: false });
   }, enabled);
 }
@@ -96,7 +98,7 @@ test('rewrites a chrome-extension img probe when protection is on', async () => 
   await page.goto(baseURL);
 
   const url = `chrome-extension://${FAKE_ID}/probe.png`;
-  const after = await page.evaluate((u) => window.__probe.imgSrcAfter(u), url);
+  const after = await page.evaluate((u: string) => (window as any).__probe.imgSrcAfter(u), url);
 
   expect(after).not.toContain('chrome-extension');
   await page.close();
@@ -108,7 +110,7 @@ test('lets the probe through when protection is off', async () => {
   await page.goto(baseURL);
 
   const url = `chrome-extension://${FAKE_ID}/probe.png`;
-  const after = await page.evaluate((u) => window.__probe.imgSrcAfter(u), url);
+  const after = await page.evaluate((u: string) => (window as any).__probe.imgSrcAfter(u), url);
 
   expect(after).toContain('chrome-extension');
   await page.close();
@@ -121,7 +123,7 @@ test('rejects a chrome-extension fetch probe when protection is on', async () =>
   await page.goto(baseURL);
 
   const result = await page.evaluate(
-    (u) => window.__probe.fetchProbe(u),
+    (u: string) => (window as any).__probe.fetchProbe(u),
     `chrome-extension://${FAKE_ID}/x.js`
   );
   expect(result).toContain('rejected');
@@ -134,8 +136,8 @@ test('neutralizes iframe.src and CSS background-image probes', async () => {
   await page.goto(baseURL);
 
   const url = `chrome-extension://${FAKE_ID}/probe`;
-  const iframeSrc = await page.evaluate((u) => window.__probe.iframeSrcAfter(u), url);
-  const cssBg = await page.evaluate((u) => window.__probe.cssBgAfter(u), url);
+  const iframeSrc = await page.evaluate((u: string) => (window as any).__probe.iframeSrcAfter(u), url);
+  const cssBg = await page.evaluate((u: string) => (window as any).__probe.cssBgAfter(u), url);
 
   expect(iframeSrc).not.toContain('chrome-extension');
   expect(cssBg).not.toContain('chrome-extension');
@@ -148,7 +150,7 @@ test('a page cannot disable protection by spoofing a config message', async () =
   await page.goto(baseURL);
 
   const after = await page.evaluate(
-    (u) => window.__probe.spoofDisableThenImg(u),
+    (u: string) => (window as any).__probe.spoofDisableThenImg(u),
     `chrome-extension://${FAKE_ID}/probe.png`
   );
   expect(after).not.toContain('chrome-extension'); // spoof ignored, still blocked
@@ -169,7 +171,7 @@ test('migrates an old/corrupt stored config: stays protected and upgrades storag
 
   // Fail-safe: a non-boolean `enabled` must NOT disable protection.
   const after = await page.evaluate(
-    (u) => window.__probe.imgSrcAfter(u),
+    (u: string) => (window as any).__probe.imgSrcAfter(u),
     `chrome-extension://${FAKE_ID}/probe.png`
   );
   expect(after).not.toContain('chrome-extension');

@@ -5,16 +5,24 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:src": "tsc -p tsconfig.src.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "pretest": "npm run build:src",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pretest:e2e": "npm run build:src",
     "test:e2e": "playwright test",
-    "build": "bash tools/pack.sh",
+    "build": "npm run build:src && bash tools/pack.sh",
     "icons": "python3 tools/make_icons.py"
   },
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.48.0",
+    "@types/chrome": "^0.2.0",
+    "@types/node": "^26.0.1",
     "jsdom": "^25.0.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
     "vitest": "^2.1.0"
   }
 }

@@ -109,7 +109,9 @@ data collection).
 
 **Chrome / Chromium (111+):**
 
-1. Get the Chrome folder (clone the repo, or unzip `…-chrome-<version>.zip`).
+1. Get the Chrome folder: unzip `…-chrome-<version>.zip`, or clone the repo and
+   run `npm install && npm run build:src` (the extension is written in TypeScript;
+   this compiles `src/*.ts` → the `src/*.js` the manifest loads).
 2. Open `chrome://extensions` → turn on **Developer mode** (top-right).
 3. Click **Load unpacked** and pick the folder that contains `manifest.json`.
 
@@ -129,12 +131,19 @@ watch the per-tab scan count.
 
 ```sh
 npm install
-npm test            # unit + integration (vitest + jsdom)
+npm run typecheck   # type-check the whole repo (src + tools + tests)
+npm run build:src   # compile src/*.ts → src/*.js (the browser-loaded output)
+npm test            # unit + integration (vitest + jsdom; compiles src first)
 npm run test:e2e    # system test (Playwright; run `npx playwright install chromium` once)
-npm run build       # produce the loadable zip in dist/
+npm run build       # compile, then produce the loadable zips in dist/
 ```
 
-Tests are layered: unit + integration (`tests/`) run under vitest, and an E2E test loads the real unpacked extension in Chromium. The Firefox build's manifest is generated from the Chrome one by `tools/firefox-manifest.js` (one source of truth) and validated by `web-ext lint`.
+The whole codebase is TypeScript. The extension keeps a no-bundler, classic-script
+architecture: `src/*.ts` compiles 1:1 to `src/*.js` (gitignored) via `tsc`, and the
+manifest loads those files directly. Tooling and tests run as TypeScript through
+`tsx`/vitest with no build step.
+
+Tests are layered: unit + integration (`tests/`) run under vitest, and an E2E test loads the real unpacked extension in Chromium. The Firefox build's manifest is generated from the Chrome one by `tools/firefox-manifest.ts` (one source of truth) and validated by `web-ext lint`.
 
 ## 🚧 Status
 

@@ -1,18 +1,18 @@
 // Unit tests for src/background.js — the service worker (counts, badge, log).
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readSrc, runScript, makeChrome } from '../helpers/harness.js';
+import { readSrc, runScript, makeChrome } from '../helpers/harness';
 
-let chrome;
+let chrome: any;
 
 // Drive the worker the way a sender would: set the originating tab, then dispatch.
-function send(msg, tabId, cb) {
+function send(msg: any, tabId: number, cb?: any) {
   chrome.__sender = { tab: { id: tabId } };
   return chrome.runtime.sendMessage(msg, cb);
 }
 
-function getStats(tabId) {
-  let stats;
-  send({ type: 'getStats', tabId }, tabId, (s) => (stats = s));
+function getStats(tabId: number) {
+  let stats: any;
+  send({ type: 'getStats', tabId }, tabId, (s: any) => (stats = s));
   return stats;
 }
 

@@ -1,7 +1,7 @@
 // Render Chrome Web Store assets (screenshots, promo tiles, icons) at exact
 // store dimensions using a headless Chromium. Pure vector/HTML in, PNG out.
 //
-//   node store/tools/render.mjs
+//   npx tsx store/tools/render.ts
 //
 // Outputs land in store/assets/. Screenshots are 1280x800, promo tiles are the
 // store's exact sizes, icons are rendered from store/tools/shield.svg.
@@ -238,7 +238,9 @@ async function snap(
 ) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   const p = await ctx.newPage();
-  await p.setContent(html, { waitUntil: 'networkidle' });
+  // The HTML is fully static (inline SVG + CSS, no network), so 'load' fires
+  // immediately — no need to wait out networkidle's 500ms quiet window.
+  await p.setContent(html, { waitUntil: 'load' });
   await p.screenshot({
     path: join(OUT, file),
     clip: { x: 0, y: 0, width: w, height: h },
@@ -248,21 +250,21 @@ async function snap(
   console.log('wrote', file, `${w}x${h}`);
 }
 
-for (const s of SCREENS) await snap(shot(s), 1280, 800, s.file);
-
-await snap(promo(440, 280, {
-  title: `Make your extensions<br><span class="hl">invisible to every site.</span>`,
-}), 440, 280, 'promo-small-440x280.png');
-
-await snap(promo(1400, 560, {
-  title: `Sites fingerprint you by your extensions.<br><span class="hl">Hide the whole list.</span>`,
-  sub: `Universal, local, free. The "privacy uBlock" for extension enumeration.`,
-}), 1400, 560, 'promo-marquee-1400x560.png');
-
-for (const size of [16, 48, 128]) {
-  await snap(iconPage(size), size, size, `icon${size}.png`, { transparent: true });
-}
-await snap(iconPage(128), 128, 128, 'store-icon-128.png', { transparent: true });
+// Each snap() runs in its own browser context, so they're independent — render
+// all nine in parallel instead of serializing nine context lifecycles.
+await Promise.all([
+  ...SCREENS.map((s) => snap(shot(s), 1280, 800, s.file)),
+  snap(promo(440, 280, {
+    title: `Make your extensions<br><span class="hl">invisible to every site.</span>`,
+  }), 440, 280, 'promo-small-440x280.png'),
+  snap(promo(1400, 560, {
+    title: `Sites fingerprint you by your extensions.<br><span class="hl">Hide the whole list.</span>`,
+    sub: `Universal, local, free. The "privacy uBlock" for extension enumeration.`,
+  }), 1400, 560, 'promo-marquee-1400x560.png'),
+  ...[16, 48, 128].map((size) =>
+    snap(iconPage(size), size, size, `icon${size}.png`, { transparent: true })),
+  snap(iconPage(128), 128, 128, 'store-icon-128.png', { transparent: true }),
+]);
 
 await browser.close();
 console.log('done →', OUT);

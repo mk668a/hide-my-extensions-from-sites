@@ -1,20 +1,13 @@
 // popup.ts — reads/writes the two toggles and renders the current tab's log.
 'use strict';
 
-interface PopupHit {
-  url?: string;
-  vector?: string;
-  action?: string;
-}
-interface PopupStats {
-  count: number;
-  log: PopupHit[];
-}
+// HmefStats / HmefHit are the shared wire shapes declared in globals.d.ts
+// (the same objects background.ts produces). No import — classic scripts.
 
 const DEFAULTS = { enabled: true, deception: false, allowlist: [] as string[] };
 const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
 
-function render(stats: PopupStats | null): void {
+function render(stats: HmefStats | null): void {
   const count = stats ? stats.count : 0;
   const log = (stats && stats.log) || [];
   $('count').textContent = count > 999 ? '999+' : String(count);

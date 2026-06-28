@@ -90,7 +90,7 @@ Pas encore de fiche sur le store : exécutez-la décompressée. `npm run build` 
 
 **Chrome / Chromium (111+) :**
 
-1. Récupérez le dossier Chrome (clonez le dépôt ou décompressez `…-chrome-<version>.zip`).
+1. Récupérez le dossier Chrome (décompressez `…-chrome-<version>.zip`, ou clonez le dépôt et lancez `npm install && npm run build:src` — l'extension est écrite en TypeScript ; cela compile `src/*.ts` vers les `src/*.js` que charge le manifest).
 2. Ouvrez `chrome://extensions` → activez le **Mode développeur** (en haut à droite).
 3. Cliquez sur **Charger l'extension non empaquetée** et choisissez le dossier qui contient `manifest.json`.
 
@@ -108,12 +108,16 @@ Dans les deux cas, l'icône 🛡 apparaît dans la barre d'outils ; cliquez dess
 
 ```sh
 npm install
-npm test            # unitaires + intégration (vitest + jsdom)
+npm run typecheck   # vérifie les types de tout le dépôt (src + tools + tests)
+npm run build:src   # compile src/*.ts → src/*.js (la sortie chargée par le navigateur)
+npm test            # unitaires + intégration (vitest + jsdom ; compile src d'abord)
 npm run test:e2e    # test système (Playwright ; lancez `npx playwright install chromium` une fois)
-npm run build       # produit le zip chargeable dans dist/
+npm run build       # compile, puis produit les zips chargeables dans dist/
 ```
 
-Les tests sont en couches : unitaires + intégration (`tests/`) tournent sous vitest, et un test E2E charge la vraie extension décompressée dans Chromium. Le manifest de la compilation Firefox est généré à partir de celui de Chrome par `tools/firefox-manifest.js` (source unique de vérité) et validé par `web-ext lint`.
+Tout le code est en TypeScript. L'extension conserve une architecture sans bundler, à scripts classiques : `src/*.ts` est compilé 1:1 en `src/*.js` (dans gitignore) par `tsc`, et le manifest charge ces fichiers directement. Les outils et les tests tournent en TypeScript via `tsx`/vitest, sans étape de build.
+
+Les tests sont en couches : unitaires + intégration (`tests/`) tournent sous vitest, et un test E2E charge la vraie extension décompressée dans Chromium. Le manifest de la compilation Firefox est généré à partir de celui de Chrome par `tools/firefox-manifest.ts` (source unique de vérité) et validé par `web-ext lint`.
 
 ## 🚧 Statut
 

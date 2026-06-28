@@ -105,7 +105,9 @@ nonce を盗み見ることもできません。
 
 **Chrome / Chromium（111+）:**
 
-1. Chrome 用フォルダを用意（repo を clone、または `…-chrome-<version>.zip` を解凍）。
+1. Chrome 用フォルダを用意（`…-chrome-<version>.zip` を解凍、または repo を clone して
+   `npm install && npm run build:src` を実行 — 拡張は TypeScript 製で、`src/*.ts` を
+   manifest が読む `src/*.js` にコンパイルします）。
 2. `chrome://extensions` を開く → 右上の **デベロッパーモード** を ON。
 3. **パッケージ化されていない拡張機能を読み込む** で `manifest.json` のあるフォルダを選択。
 
@@ -124,12 +126,16 @@ nonce を盗み見ることもできません。
 
 ```sh
 npm install
-npm test            # ユニット + 統合（vitest + jsdom）
+npm run typecheck   # リポ全体を型チェック（src + tools + tests）
+npm run build:src   # src/*.ts → src/*.js にコンパイル（ブラウザが読む出力）
+npm test            # ユニット + 統合（vitest + jsdom。先に src をコンパイル）
 npm run test:e2e    # システムテスト（Playwright。初回のみ npx playwright install chromium）
-npm run build       # dist/ に読み込み用 zip を生成
+npm run build       # コンパイルして dist/ に読み込み用 zip を生成
 ```
 
-テストは多層: ユニット + 統合（`tests/`）は vitest で実行、E2E は実物の unpacked 拡張を Chromium にロードして検証。Firefox 版の manifest は `tools/firefox-manifest.js` が Chrome 版から生成し（単一の真実）、`web-ext lint` で検証します。
+コードベース全体が TypeScript です。拡張は no-bundler の classic-script 構成を保ち、`src/*.ts` は `tsc` で `src/*.js`（gitignore 済み）に 1:1 コンパイルされ、manifest がそれを直接読みます。ツールとテストは `tsx`/vitest で TypeScript のまま実行（ビルド不要）。
+
+テストは多層: ユニット + 統合（`tests/`）は vitest で実行、E2E は実物の unpacked 拡張を Chromium にロードして検証。Firefox 版の manifest は `tools/firefox-manifest.ts` が Chrome 版から生成し（単一の真実）、`web-ext lint` で検証します。
 
 ## 🚧 ステータス
 

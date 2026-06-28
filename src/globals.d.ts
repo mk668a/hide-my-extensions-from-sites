@@ -18,6 +18,19 @@ interface HmefSchema {
   migrateConfig(raw: unknown): HmefConfig;
 }
 
+/** One intercepted probe — logged by the worker (background.ts), shown by popup.ts. */
+interface HmefHit {
+  url: string;
+  vector: string;
+  action: string;
+}
+
+/** Per-tab stats the worker hands the popup over `getStats`. */
+interface HmefStats {
+  count: number;
+  log: HmefHit[];
+}
+
 // Make `self.HMEFSchema`, `window.HMEFSchema`, `globalThis.HMEFSchema` and the
 // bare `HMEFSchema` identifier all resolve to the published object.
 interface Window {

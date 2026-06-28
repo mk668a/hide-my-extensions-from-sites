@@ -152,7 +152,7 @@ diminishing returns; the store allows up to 5), 24-bit PNG with no alpha on the
 screenshots/promos, exact pixel dimensions, no rounded corners / drop shadows baked
 into the promo tiles' outer edge. Regenerate anytime with:
 ```sh
-node store/tools/render.mjs
+npx tsx store/tools/render.ts
 ```
 
 The toolbar icons in `icons/` (16/48/128) are the same shield artwork, re-rendered

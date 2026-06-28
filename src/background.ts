@@ -5,20 +5,13 @@
 // the next intercepted probe repaints the badge.
 'use strict';
 
-interface LogEntry {
-  url: string;
-  vector: string;
-  action: string;
-}
-interface TabState {
-  count: number;
-  log: LogEntry[];
-}
+// HmefHit / HmefStats are the cross-file wire shapes, declared in globals.d.ts
+// (shared with popup.ts). No import — these are classic scripts.
 
 const LOG_CAP = 50;
-const state = new Map<number, TabState>(); // tabId -> { count, log }
+const state = new Map<number, HmefStats>(); // tabId -> { count, log }
 
-function entryFor(tabId: number): TabState {
+function entryFor(tabId: number): HmefStats {
   let e = state.get(tabId);
   if (!e) {
     e = { count: 0, log: [] };

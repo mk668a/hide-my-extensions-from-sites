@@ -90,7 +90,7 @@
 
 **Chrome / Chromium(111+):**
 
-1. Chrome 폴더를 준비합니다(저장소를 클론하거나 `…-chrome-<version>.zip`을 풉니다).
+1. Chrome 폴더를 준비합니다(`…-chrome-<version>.zip`을 풀거나, 저장소를 클론한 뒤 `npm install && npm run build:src` 실행 — 확장은 TypeScript로 작성되어 있으며, 이 명령이 `src/*.ts`를 manifest가 로드하는 `src/*.js`로 컴파일합니다).
 2. `chrome://extensions`를 열고 오른쪽 위의 **개발자 모드**를 켭니다.
 3. **압축해제된 확장 프로그램을 로드합니다**를 클릭하고 `manifest.json`이 들어 있는 폴더를 고릅니다.
 
@@ -108,12 +108,16 @@
 
 ```sh
 npm install
-npm test            # 단위 + 통합(vitest + jsdom)
+npm run typecheck   # 저장소 전체 타입 체크(src + tools + tests)
+npm run build:src   # src/*.ts → src/*.js 컴파일(브라우저가 로드하는 출력)
+npm test            # 단위 + 통합(vitest + jsdom; 먼저 src를 컴파일)
 npm run test:e2e    # 시스템 테스트(Playwright; 처음 한 번 `npx playwright install chromium` 실행)
-npm run build       # dist/에 로드 가능한 zip 생성
+npm run build       # 컴파일 후 dist/에 로드 가능한 zip 생성
 ```
 
-테스트는 계층적입니다: 단위 + 통합(`tests/`)은 vitest로 돌고, E2E 테스트는 Chromium에서 실제 압축해제된 확장을 로드합니다. Firefox 빌드의 manifest는 `tools/firefox-manifest.js`가 Chrome 버전에서 생성하며(단일 사실 출처), `web-ext lint`로 검증합니다.
+코드베이스 전체가 TypeScript입니다. 확장은 번들러 없는 classic-script 구조를 유지합니다: `src/*.ts`는 `tsc`로 `src/*.js`(gitignore 처리됨)에 1:1 컴파일되고, manifest가 그 파일들을 직접 로드합니다. 도구와 테스트는 `tsx`/vitest로 TypeScript 그대로 실행되며 빌드 단계가 없습니다.
+
+테스트는 계층적입니다: 단위 + 통합(`tests/`)은 vitest로 돌고, E2E 테스트는 Chromium에서 실제 압축해제된 확장을 로드합니다. Firefox 빌드의 manifest는 `tools/firefox-manifest.ts`가 Chrome 버전에서 생성하며(단일 사실 출처), `web-ext lint`로 검증합니다.
 
 ## 🚧 상태
 

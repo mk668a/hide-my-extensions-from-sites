@@ -90,7 +90,7 @@
 
 **Chrome / Chromium（111+）：**
 
-1. 取得 Chrome 文件夹（克隆本仓库，或解压 `…-chrome-<version>.zip`）。
+1. 取得 Chrome 文件夹（解压 `…-chrome-<version>.zip`，或克隆本仓库并运行 `npm install && npm run build:src` —— 扩展用 TypeScript 编写，这会把 `src/*.ts` 编译成 manifest 加载的 `src/*.js`）。
 2. 打开 `chrome://extensions` → 打开右上角的**开发者模式**。
 3. 点击**加载已解压的扩展程序**，选择包含 `manifest.json` 的文件夹。
 
@@ -108,12 +108,16 @@
 
 ```sh
 npm install
-npm test            # 单元 + 集成（vitest + jsdom）
+npm run typecheck   # 类型检查整个仓库（src + tools + tests）
+npm run build:src   # 把 src/*.ts 编译为 src/*.js（浏览器加载的输出）
+npm test            # 单元 + 集成（vitest + jsdom；先编译 src）
 npm run test:e2e    # 系统测试（Playwright；首次先运行 `npx playwright install chromium`）
-npm run build       # 在 dist/ 产出可加载的 zip
+npm run build       # 编译后在 dist/ 产出可加载的 zip
 ```
 
-测试是分层的：单元 + 集成（`tests/`）在 vitest 下运行，E2E 测试会在 Chromium 中加载真实的未打包扩展。Firefox 构建的 manifest 由 `tools/firefox-manifest.js` 从 Chrome 版生成（单一事实来源），并通过 `web-ext lint` 校验。
+整个代码库都是 TypeScript。扩展保持无打包器的 classic-script 架构：`src/*.ts` 通过 `tsc` 1:1 编译为 `src/*.js`（已 gitignore），manifest 直接加载这些文件。工具和测试通过 `tsx`/vitest 以 TypeScript 形式运行，无需构建步骤。
+
+测试是分层的：单元 + 集成（`tests/`）在 vitest 下运行，E2E 测试会在 Chromium 中加载真实的未打包扩展。Firefox 构建的 manifest 由 `tools/firefox-manifest.ts` 从 Chrome 版生成（单一事实来源），并通过 `web-ext lint` 校验。
 
 ## 🚧 状态
 

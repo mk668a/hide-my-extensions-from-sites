@@ -11,7 +11,10 @@
     "declaration": false,
     "sourceMap": false,
     // No module wrappers in the output: these are classic content scripts, not
-    // ES modules. None of them use import/export, so emit is a plain script.
+    // ES modules. This only holds while no src file uses import/export — a single
+    // top-level import would make tsc emit real ESM, which the browser rejects at
+    // load ("Cannot use import statement outside a module") with no build error.
+    // Cross-file wiring is via globals (self.HMEFSchema) + manifest load order.
     "module": "ES2020",
     "types": ["chrome"]
   },

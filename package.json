@@ -7,12 +7,11 @@
   "scripts": {
     "build:src": "tsc -p tsconfig.src.json",
     "typecheck": "tsc -p tsconfig.json",
-    "pretest": "npm run build:src",
     "test": "vitest run",
     "test:watch": "vitest",
     "pretest:e2e": "npm run build:src",
     "test:e2e": "playwright test",
-    "build": "npm run build:src && bash tools/pack.sh",
+    "build": "bash tools/pack.sh",
     "icons": "python3 tools/make_icons.py"
   },
   "license": "MIT",
